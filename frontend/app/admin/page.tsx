@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Search,
 } from "lucide-react";
-import { api, Product, Category } from "@/lib/api";
+import { api, Product, Category, getImageUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductForm } from "@/components/admin/ProductForm";
@@ -220,7 +220,7 @@ export default function AdminPage() {
                           <div className="relative w-10 h-10 rounded-md overflow-hidden bg-muted shrink-0">
                             {product.images.length > 0 ? (
                               <Image
-                                src={product.images[0]}
+                                src={getImageUrl(product.images[0])}
                                 alt={product.name}
                                 fill
                                 className="object-cover"

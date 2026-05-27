@@ -2,6 +2,15 @@ import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+export const getImageUrl = (path: string): string => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const base = process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "")
+    : "http://localhost:3001";
+  return `${base}${path}`;
+};
+
 export const api = axios.create({
   baseURL: API_URL,
   headers: {

@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import { useCartStore } from "@/stores/cartStore";
+import { getImageUrl } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
+import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 
 export default function CartPage() {
@@ -53,7 +54,7 @@ export default function CartPage() {
                 <div className="relative w-24 h-24 rounded-md overflow-hidden bg-muted shrink-0">
                   {item.product.images.length > 0 ? (
                     <Image
-                      src={item.product.images[0]}
+                      src={getImageUrl(item.product.images[0])}
                       alt={item.product.name}
                       fill
                       className="object-cover"

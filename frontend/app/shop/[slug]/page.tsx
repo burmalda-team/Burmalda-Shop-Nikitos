@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Check } from "lucide-react";
-import { api, Product } from "@/lib/api";
+import { api, Product, getImageUrl } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,7 +91,7 @@ export default function ProductPage() {
           <div className="aspect-square relative rounded-xl overflow-hidden bg-muted">
             {product.images.length > 0 ? (
               <Image
-                src={product.images[0]}
+                src={getImageUrl(product.images[0])}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -107,7 +107,7 @@ export default function ProductPage() {
             <div className="grid grid-cols-4 gap-2">
               {product.images.slice(1).map((img, i) => (
                 <div key={i} className="aspect-square relative rounded-lg overflow-hidden bg-muted">
-                  <Image src={img} alt={`${product.name} ${i + 2}`} fill className="object-cover" />
+                  <Image src={getImageUrl(img)} alt={`${product.name} ${i + 2}`} fill className="object-cover" />
                 </div>
               ))}
             </div>

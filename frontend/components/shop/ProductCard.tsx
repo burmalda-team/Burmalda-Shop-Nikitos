@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag, Heart } from "lucide-react";
-import { Product } from "@/lib/api";
+import { Product, getImageUrl } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
           {product.images.length > 0 ? (
             <Image
-              src={product.images[0]}
+              src={getImageUrl(product.images[0])}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -15,7 +15,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+}));
 app.use(express.json());
 app.use(`/${UPLOAD_DIR}`, express.static(path.resolve(UPLOAD_DIR)));
 
