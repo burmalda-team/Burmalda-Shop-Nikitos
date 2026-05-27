@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
 async function getSession(request: NextRequest) {
   const supabase = createServerClient(
@@ -21,24 +22,30 @@ async function getSession(request: NextRequest) {
   );
 
   const { data: { session } } = await supabase.auth.getSession();
-  return { session, supabase };
+  return { session };
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { session, supabase } = await getSession(request);
+  const { session } = await getSession(request);
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { error } = await supabase
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await supabaseAdmin
     .from("products")
     .delete()
     .eq("id", params.id);
 
   if (error) {
+    console.error("Delete product error:", error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
