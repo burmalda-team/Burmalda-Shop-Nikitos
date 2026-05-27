@@ -21,8 +21,12 @@ export default function HomePage() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetch("/api/products/bestsellers").then((res) => res.json()).then((data) => setBestsellers(data));
-    fetch("/api/products/new-arrivals").then((res) => res.json()).then((data) => setNewArrivals(data));
+    fetch("/api/products/bestsellers")
+      .then((res) => res.json())
+      .then((data) => setBestsellers(Array.isArray(data) ? data : []));
+    fetch("/api/products/new-arrivals")
+      .then((res) => res.json())
+      .then((data) => setNewArrivals(Array.isArray(data) ? data : []));
   }, []);
 
   return (

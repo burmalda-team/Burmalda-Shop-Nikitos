@@ -54,7 +54,9 @@ export default function ShopPage() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    fetch("/api/categories").then((res) => res.json()).then((data) => setCategories(data));
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []));
   }, []);
 
   useEffect(() => {
