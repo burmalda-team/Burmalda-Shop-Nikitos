@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Search,
 } from "lucide-react";
-import { api, Product, Category, getImageUrl } from "@/lib/api";
+import { supabase, Product, Category, getImageUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductForm } from "@/components/admin/ProductForm";
@@ -31,29 +31,25 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
-
-    api
-      .get("/auth/me")
-      .then(() => setIsAdmin(true))
-      .catch(() => {
-        localStorage.removeItem("admin_token");
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         router.push("/admin/login");
-      });
+        return;
+      }
+      setIsAdmin(true);
+    });
   }, [router]);
 
   const fetchData = async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        api.get("/products?limit=100"),
-        api.get("/categories"),
+        fetch("/api/products?limit=100"),
+        fetch("/api/categories"),
       ]);
-      setProducts(productsRes.data.products);
-      setCategories(categoriesRes.data);
+      const productsData = await productsRes.json();
+      const categoriesData = await categoriesRes.json();
+      setProducts(productsData.products || []);
+      setCategories(categoriesData || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -65,16 +61,20 @@ export default function AdminPage() {
     if (isAdmin) fetchData();
   }, [isAdmin]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/admin/login");
+    router.refresh();
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Удалить товар?")) return;
     try {
-      await api.delete(`/products/${id}`);
-      fetchData();
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) fetchData();
+      else alert("Ошибка удаления");
     } catch (error) {
       alert("Ошибка удаления");
     }
@@ -238,7 +238,7 @@ export default function AdminPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {product.category.name}
+                        {product.category?.name}
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-medium">{product.price.toLocaleString("ru-RU")} ₽</span>

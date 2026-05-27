@@ -1,43 +1,6 @@
-import axios from "axios";
+import { createClient } from "./supabase/client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-export const getImageUrl = (path: string): string => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  const base = process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace("/api", "")
-    : "http://localhost:3001";
-  return `${base}${path}`;
-};
-
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("admin_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("admin_token");
-      if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
-        window.location.href = "/admin/login";
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+export const supabase = createClient();
 
 export interface Product {
   id: string;
@@ -62,7 +25,6 @@ export interface Category {
   name: string;
   slug: string;
   image: string | null;
-  _count?: { products: number };
 }
 
 export interface CartItem {
@@ -70,4 +32,15 @@ export interface CartItem {
   size: string;
   color: string;
   quantity: number;
+}
+
+export function getImageUrl(path: string): string {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (path.startsWith("/uploads/") && supabaseUrl) {
+    // Supabase Storage public URL
+    return `${supabaseUrl}/storage/v1/object/public/products${path}`;
+  }
+  return path;
 }

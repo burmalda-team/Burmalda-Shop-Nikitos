@@ -1,119 +1,89 @@
-# Деплой проекта
+# Деплой на Vercel + Supabase (Полностью бесплатно)
 
-## Архитектура
+## Часть 1: Supabase
 
-Проект состоит из двух частей, которые деплоятся отдельно:
-- **Frontend** (Next.js) → Vercel
-- **Backend** (Express + PostgreSQL) → Render
+### 1.1 Создай проект
+1. Зарегистрируйся на [supabase.com](https://supabase.com)
+2. Нажми **New Project**
+3. Название: `burmalda`
+4. Регион: `Central EU (Frankfurt)`
+5. Пароль базы данных: придумай надёжный
+6. Жми **Create new project** (жди ~2 минуты)
 
----
+### 1.2 Скопируй ключи
+Перейди в Project Settings → API:
+- `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
+- `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `service_role secret` → `SUPABASE_SERVICE_ROLE_KEY`
 
-## Часть 1: Backend на Render
+### 1.3 Создай таблицы
+1. SQL Editor → New query
+2. Вставь содержимое файла `supabase-schema.sql` из репозитория
+3. Жми **Run**
 
-### 1. Создайте PostgreSQL базу
+### 1.4 Создай Storage bucket для картинок
+1. Storage → New bucket
+2. Название: `products`
+3. **Public bucket** → включи галочку
+4. Create bucket
 
-1. Зарегистрируйтесь на [render.com](https://render.com)
-2. Перейдите в Dashboard → New → PostgreSQL
-3. Название: `burmalda-db`
-4. Регион: Frankfurt (EU Central) — ближе к России
-5. Нажмите Create Database
-6. Скопируйте **Internal Database URL** — он понадобится для backend
-
-### 2. Создайте Web Service для Backend
-
-1. Dashboard → New → Web Service
-2. Подключите свой GitHub репозиторий
-3. Настройки:
-   - **Name**: `burmalda-api`
-   - **Root Directory**: `backend`
-   - **Runtime**: Node
-   - **Build Command**: `npm install && npx prisma generate`
-   - **Start Command**: `npm start`
-4. Перейдите в раздел **Environment Variables** и добавьте:
-   ```
-   DATABASE_URL=postgresql://... (Internal Database URL из шага 1)
-   JWT_SECRET=your-super-secret-key-min-32-chars-long
-   FRONTEND_URL=https://your-frontend.vercel.app
-   PORT=10000
-   UPLOAD_DIR=uploads
-   ```
-5. Нажмите Create Web Service
-
-### 3. Запустите миграции (один раз)
-
-После деплоя откройте Shell в Render Dashboard и выполните:
-```bash
-npx prisma migrate deploy
-npx prisma db seed
+### 1.5 Создай админа
+1. Authentication → Users → Add user
+2. Email: `admin@burmalda.ru`
+3. Password: придумай пароль
+4. Жми **Create user**
+5. Затем SQL Editor → New query:
+```sql
+UPDATE profiles SET role = 'admin' 
+WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@burmalda.ru');
 ```
 
-### 4. Скопируйте URL бэкенда
-
-Он будет вида: `https://burmalda-api.onrender.com`
-
 ---
 
-## Часть 2: Frontend на Vercel
+## Часть 2: Vercel (Frontend)
 
-### 1. Импортируйте проект
+### 2.1 Импортируй проект
+1. [vercel.com](https://vercel.com) → зарегистрируйся через GitHub
+2. Add New Project → импортируй репозиторий
 
-1. Зарегистрируйтесь на [vercel.com](https://vercel.com) (можно через GitHub)
-2. Нажмите **Add New Project**
-3. Импортируйте свой GitHub репозиторий
-
-### 2. Настройте проект
-
-| Настройка | Значение |
+### 2.2 Настройки
+| Параметр | Значение |
 |---|---|
 | Framework Preset | Next.js |
 | Root Directory | `frontend` |
 | Build Command | `npm run build` |
-| Output Directory | `.next` |
 
-### 3. Добавьте Environment Variable
-
+### 2.3 Environment Variables
+Добавь три переменные:
 ```
-NEXT_PUBLIC_API_URL=https://burmalda-api.onrender.com/api
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-(Замените на ваш URL бэкенда из Части 1)
-
-### 4. Deploy
-
-Нажмите **Deploy**. Через 2-3 минуты сайт будет доступен.
+### 2.4 Deploy
+Жми **Deploy**! Через 2-3 минуты сайт будет доступен.
 
 ---
 
-## Важные замечания
+## Готово! 🎉
 
-### ⚠️ Изображения на Render
+- **Сайт**: `https://your-project.vercel.app`
+- **Админка**: `/admin`
+- **Вход**: email `admin@burmalda.ru` + твой пароль
 
-Render использует ephemeral диск — загруженные через админку изображения **будут теряться** при перезапуске сервера.
+## Локальный запуск (для разработки)
 
-**Решения:**
-1. **Cloudinary** (рекомендуется) — бесплатно до 25GB. Потребуется небольшая доработка загрузки.
-2. **AWS S3** — надёжное хранилище.
-3. Для теста можно использовать Imgur или аналогичный хостинг изображений.
+```bash
+# 1. Установи зависимости
+cd frontend
+npm install
 
-### ⚠️ Бесплатный tier Render
+# 2. Создай .env.local (не коммить его!)
+NEXT_PUBLIC_SUPABASE_URL=https://...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 
-- Сервер "засыпает" после 15 минут без активности
-- Первый запрос после сна может занять 30-60 секунд
-- База данных бесплатна навсегда (с ограничениями)
-
-### ⚠️ Бесплатный tier Vercel
-
-- Serverless функции с ограничениями
-- Отличная скорость загрузки из-за CDN
-- Домен вида `*.vercel.app`
-
----
-
-## Быстрый чек-лист
-
-- [ ] Создана PostgreSQL на Render
-- [ ] Скопирован DATABASE_URL в Environment Variables backend
-- [ ] Backend задеплоен и работает (проверьте `/api/health`)
-- [ ] Добавлен `NEXT_PUBLIC_API_URL` в Environment Variables Vercel
-- [ ] Frontend задеплоен
-- [ ] Админ-панель доступна (`/admin`)
+# 3. Запусти
+npm run dev
+```

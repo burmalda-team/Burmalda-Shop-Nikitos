@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
-import { api, Product, Category } from "@/lib/api";
+import { Product, Category } from "@/lib/api";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,9 +38,10 @@ export default function ShopPage() {
       params.append("order", sortOrder);
       params.append("page", page.toString());
 
-      const res = await api.get(`/products?${params}`);
-      setProducts(res.data.products);
-      setTotal(res.data.total);
+      const res = await fetch(`/api/products?${params}`);
+      const data = await res.json();
+      setProducts(data.products);
+      setTotal(data.total);
     } catch (error) {
       console.error(error);
     } finally {
@@ -53,7 +54,7 @@ export default function ShopPage() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    api.get("/categories").then((res) => setCategories(res.data));
+    fetch("/api/categories").then((res) => res.json()).then((data) => setCategories(data));
   }, []);
 
   useEffect(() => {

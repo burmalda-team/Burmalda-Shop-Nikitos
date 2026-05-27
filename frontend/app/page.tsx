@@ -7,7 +7,7 @@ import { ArrowRight, Truck, Shield, RotateCcw, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { useEffect, useState } from "react";
-import { api, Product } from "@/lib/api";
+import { Product } from "@/lib/api";
 
 const features = [
   { icon: Truck, title: "Быстрая доставка", desc: "По всей России от 1 дня" },
@@ -21,8 +21,8 @@ export default function HomePage() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
 
   useEffect(() => {
-    api.get("/products/bestsellers").then((res) => setBestsellers(res.data));
-    api.get("/products/new-arrivals").then((res) => setNewArrivals(res.data));
+    fetch("/api/products/bestsellers").then((res) => res.json()).then((data) => setBestsellers(data));
+    fetch("/api/products/new-arrivals").then((res) => res.json()).then((data) => setNewArrivals(data));
   }, []);
 
   return (

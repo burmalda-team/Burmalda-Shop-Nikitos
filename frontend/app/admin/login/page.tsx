@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Lock, User } from "lucide-react";
-import { api } from "@/lib/api";
+import { Lock, Mail } from "lucide-react";
+import { supabase } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +21,20 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", { username, password });
-      localStorage.setItem("admin_token", res.data.token);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
       router.push("/admin");
+      router.refresh();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Ошибка входа");
+      setError(err.message || "Ошибка входа");
     } finally {
       setLoading(false);
     }
@@ -47,14 +56,15 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Логин</label>
+            <label className="text-sm font-medium">Email</label>
             <div className="relative">
-              <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-9"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@burmalda.ru"
                 required
               />
             </div>

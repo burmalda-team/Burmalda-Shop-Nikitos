@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Upload } from "lucide-react";
-import { api, Product, Category } from "@/lib/api";
+import { Product, Category, getImageUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,36 +81,55 @@ export function ProductForm({ product, categories, open, onClose, onSuccess }: P
     setLoading(true);
 
     try {
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("slug", formData.slug);
-      data.append("description", formData.description);
-      data.append("price", formData.price);
-      if (formData.oldPrice) data.append("oldPrice", formData.oldPrice);
-      data.append("categoryId", formData.categoryId);
-      data.append("sizes", JSON.stringify(formData.sizes.split(",").map((s) => s.trim()).filter(Boolean)));
-      data.append("colors", JSON.stringify(formData.colors.split(",").map((s) => s.trim()).filter(Boolean)));
-      data.append("inStock", String(formData.inStock));
-      data.append("isNew", String(formData.isNew));
-      data.append("isBestseller", String(formData.isBestseller));
-      data.append("existingImages", JSON.stringify(existingImages));
+      let uploadedUrls: string[] = [];
 
-      newFiles.forEach((file) => data.append("images", file));
+      if (newFiles.length > 0) {
+        const data = new FormData();
+        newFiles.forEach((file) => data.append("images", file));
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          body: data,
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        uploadedUrls = result.urls;
+      }
+
+      const payload = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        oldPrice: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
+        images: [...existingImages, ...uploadedUrls],
+        sizes: formData.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+        colors: formData.colors.split(",").map((s) => s.trim()).filter(Boolean),
+        categoryId: formData.categoryId,
+        inStock: formData.inStock,
+        isNew: formData.isNew,
+        isBestseller: formData.isBestseller,
+      };
 
       if (product) {
-        await api.put(`/products/${product.id}`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
+        const res = await fetch("/api/admin/products", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: product.id, ...payload }),
         });
+        if (!res.ok) throw new Error("Ошибка обновления");
       } else {
-        await api.post("/products", data, {
-          headers: { "Content-Type": "multipart/form-data" },
+        const res = await fetch("/api/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
+        if (!res.ok) throw new Error("Ошибка создания");
       }
 
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Ошибка сохранения");
+      alert(err.message || "Ошибка сохранения");
     } finally {
       setLoading(false);
     }
@@ -249,7 +268,7 @@ export function ProductForm({ product, categories, open, onClose, onSuccess }: P
             <div className="flex flex-wrap gap-2 mb-2">
               {existingImages.map((img, i) => (
                 <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={getImageUrl(img)} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl"

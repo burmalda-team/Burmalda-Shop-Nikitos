@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Check } from "lucide-react";
-import { api, Product, getImageUrl } from "@/lib/api";
+import { Product, getImageUrl } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +25,10 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (slug) {
-      api
-        .get(`/products/${slug}`)
+      fetch(`/api/products/${slug}`)
+        .then((res) => res.json())
         .then((res) => {
-          setProduct(res.data);
+          setProduct(res);
           if (res.data.sizes.length > 0) setSelectedSize(res.data.sizes[0]);
           if (res.data.colors.length > 0) setSelectedColor(res.data.colors[0]);
         })
