@@ -32,19 +32,23 @@ function normalizeProduct(p: any) {
   };
 }
 
+const sortMap: Record<string, string> = {
+  createdAt: "created_at",
+  price: "price",
+  name: "name",
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    let query = supabase
-      .from("products")
-      .select("*, categories(*)");
+    let query = supabase.from("products").select("*, categories(*)");
 
     const category = searchParams.get("category");
     const search = searchParams.get("search");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    const sort = searchParams.get("sort") || "created_at";
+    const sort = searchParams.get("sort") || "createdAt";
     const order = searchParams.get("order") || "desc";
 
     if (category) {
@@ -70,7 +74,8 @@ export async function GET(request: NextRequest) {
       query = query.lte("price", parseFloat(maxPrice));
     }
 
-    query = query.order(sort, { ascending: order === "asc" });
+    const dbSort = sortMap[sort] || "created_at";
+    query = query.order(dbSort, { ascending: order === "asc" });
 
     const { data: products, error } = await query;
 
