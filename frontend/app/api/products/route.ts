@@ -35,38 +35,65 @@ function normalizeProduct(p: any) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
+
+    let query = supabase
+      .from("products")
+      .select("*, categories(*)");
+
+    const category = searchParams.get("category");
+    const search = searchParams.get("search");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
     const sort = searchParams.get("sort") || "created_at";
     const order = searchParams.get("order") || "desc";
 
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    if (category) {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", category)
+        .single();
+      if (cat) {
+        query = query.eq("category_id", cat.id);
+      }
+    }
 
-    const { data: products, error, count } = await supabase
-      .from("products")
-      .select("*, categories(*)", { count: "exact" })
-      .order(sort, { ascending: order === "asc" })
-      .range(from, to);
+    if (search) {
+      query = query.ilike("name", `%${search}%`);
+    }
+
+    if (minPrice) {
+      query = query.gte("price", parseFloat(minPrice));
+    }
+
+    if (maxPrice) {
+      query = query.lte("price", parseFloat(maxPrice));
+    }
+
+    query = query.order(sort, { ascending: order === "asc" });
+
+    const { data: products, error } = await query;
 
     if (error) {
       console.error("Products error:", error);
       return NextResponse.json(
-        { message: error.message, details: error, products: [], total: 0, pages: 0, page: 1 },
+        { message: error.message, products: [], total: 0 },
         { status: 500 }
       );
     }
 
+    const normalized = (products || []).map(normalizeProduct).filter(Boolean);
+
     return NextResponse.json({
-      products: (products || []).map(normalizeProduct),
-      total: count || 0,
-      pages: Math.ceil((count || 0) / limit),
-      page,
+      products: normalized,
+      total: normalized.length,
+      pages: 1,
+      page: 1,
     });
   } catch (err: any) {
     console.error("API crash:", err);
     return NextResponse.json(
-      { message: err.message, stack: err.stack, products: [], total: 0, pages: 0, page: 1 },
+      { message: err.message, products: [], total: 0 },
       { status: 500 }
     );
   }
