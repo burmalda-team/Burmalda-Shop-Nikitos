@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabasePublic } from "@/lib/supabase/public";
+import { normalizeProduct } from "@/lib/api";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,13 +8,13 @@ export async function GET(request: NextRequest) {
 
     let query = supabasePublic
       .from("products")
-      .select("*, category:categories(*)", { count: "exact" });
+      .select("*, categories(*)", { count: "exact" });
 
     const category = searchParams.get("category");
     const search = searchParams.get("search");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    const sort = searchParams.get("sort") || "createdAt";
+    const sort = searchParams.get("sort") || "created_at";
     const order = searchParams.get("order") || "desc";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      products: products || [],
+      products: (products || []).map(normalizeProduct),
       total: count || 0,
       pages: Math.ceil((count || 0) / limit),
       page,

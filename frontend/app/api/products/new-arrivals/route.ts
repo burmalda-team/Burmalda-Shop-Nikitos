@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabasePublic } from "@/lib/supabase/public";
+import { normalizeProduct } from "@/lib/api";
 
 export async function GET() {
   try {
     const { data: products, error } = await supabasePublic
       .from("products")
-      .select("*, category:categories(*)")
+      .select("*, categories(*)")
       .eq("is_new", true)
       .limit(8);
 
@@ -14,7 +15,7 @@ export async function GET() {
       return NextResponse.json([], { status: 200 });
     }
 
-    return NextResponse.json(products || []);
+    return NextResponse.json((products || []).map(normalizeProduct));
   } catch (err: any) {
     console.error("New arrivals API error:", err);
     return NextResponse.json([], { status: 200 });
